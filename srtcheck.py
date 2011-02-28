@@ -10,7 +10,7 @@ import re
 warnings_encountered = False
 
 def print_warning_or_error(msg,typemsg,lineno) :
-	print("File "+filename+": "+typemsg+", on line "+str(lineno)+" "+msg)
+	print("File "+filename+": "+typemsg+", on line "+str(lineno)+", "+msg)
 
 def print_warning(msg,lineno) :
 	print_warning_or_error(msg,"Warning",lineno)
@@ -22,8 +22,12 @@ def print_error(msg,lineno) :
 """ Check if str(str_input) is equal to expected_integer """
 """ Print a warning if this not the case. Pure method otherwise. """
 def checkcounter(str_input,expected_integer,lineno) :
-	if(int(str_input) != expected_integer) :
-		print_warning("I've found subtitle number "+str(str_input)+" while I was exepecting subtitle number "+str(expected_integer)+".",lineno)
+	try:
+		if(int(str_input) != expected_integer) :
+			print_warning("I've found subtitle number "+str(str_input)+" while I was exepecting subtitle number "+str(expected_integer)+".",lineno)
+	except ValueError:
+		print_error("unexpected input : is a subtitle number missing (I was expecting #"+str(expected_integer)+") ?",lineno)
+		sys.exit(3)
 
 arrowpattern = re.compile('^\s*(\S*)\s*-->\s*(\S*)\s*$') # \s is space, \S is not-space
 
