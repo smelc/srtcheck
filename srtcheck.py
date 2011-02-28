@@ -1,8 +1,8 @@
 #!/usr/bin/python3.1
 
-# Licence: do whatever you want with that.
+# Licence: Do whatever you want with that.
 
-# TODO : check that times are increasing
+# TODO : check that times are increasing ?
 
 import sys
 import re
