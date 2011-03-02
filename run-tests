@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# TODO : factorize this script using bash's methods
+
+# This script accepts only one option "--only-utf-8"
+
+# list of files to check
+utf8filesshouldpass=`cat tests/files-encoding | grep '^utf-8' | grep 'shouldpass' | awk '{print $2}'`
+utf8filesshouldfail=`cat tests/files-encoding | grep '^utf-8' | grep 'shouldfail' | awk '{print $2}'`
+otherfilesshouldpass=`cat tests/files-encoding | grep -v '^utf-8' | grep 'shouldpass' | awk '{print $2}'`
+otherfilesshouldfail=`cat tests/files-encoding | grep -v '^utf-8' | grep 'shouldfail' | awk '{print $2}'`
+faulty_files=""
+
+for f in $utf8filesshouldpass
+do
+	# echo "Testing tests/"$f":"
+	./srtcheck.py tests/$f > /dev/null
+	if [ $? != "0" ]
+	then # test failed
+      		faulty_files=$faulty_files" "$f
+		echo -n "!"
+	else # test passed
+		echo -n "."
+	fi
+done
+
+for f in $utf8filesshouldfail
+do
+	# echo "Testing tests/"$f":"
+	./srtcheck.py tests/$f > /dev/null
+	if [ $? == "0" ]
+	then # test failed
+      		faulty_files=$faulty_files" "$f
+		echo -n "!"
+	else # test passed
+		echo -n "."
+	fi
+done
+
+if [ "$1" != "--only-utf-8" ]
+then
+	for f in $otherfilesshouldpass
+	do
+		# echo "Testing tests/"$f":"
+		./srtcheck.py tests/$f > /dev/null
+		if [ $? != "0" ]
+		then # test failed
+			faulty_files=$faulty_files" "$f
+			echo -n "!"
+		else # test passed
+			echo -n "."
+		fi
+	done
+
+	for f in $otherfilesshouldfail
+	do
+		# echo "Testing tests/"$f":"
+		./srtcheck.py tests/$f > /dev/null
+		if [ $? == "0" ]
+		then # test failed
+			faulty_files=$faulty_files" "$f
+			echo -n "!"
+		else # test passed
+			echo -n "."
+		fi
+	done
+fi
+
+if [ "$faulty_files" != "" ]
+then
+    echo " Faulty file(s):"$faulty_files
+else
+    echo " All tests passed!"
+fi

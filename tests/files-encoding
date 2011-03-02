@@ -1,0 +1,7 @@
+utf-8	test1.shouldpass.withwarning.online.734.srt
+utf-8	test2.shouldfail.online.406.srt
+utf-8	test3.shouldfail.online.92.srt
+utf-8	test4.shouldpass.srt
+latin1	test5.srt
+latin1	test6.shouldfail.online.2815.srt
+latin1	test7.srt
