@@ -2,6 +2,20 @@
 
 Check the syntax of .srt files (subtitles).
 
+## Remarks ##
+
+- Tested only on a system with utf-8 as the default encoding.
+- script ./run-tests if for development purposes. Yet, you can try it
+  to verify that srtcheck behaves as planned on your machine.
+
+## Options ##
+
+- "--verbose" : display checked lines.
+- "--try-encoding blah" : srtcheck will try encoding blah if utf8 fails (default: iso-8859-1 and latin1 are tried).
+  Incompatible with --only-encoding.
+- "--only-encoding blah" : srtcheck will use exclusively encoding blah (default is utf-8). Incompatible
+  with --try-encoding.
+
 ## Usage ##
 
     $ ./srtcheck.py tests/test1.shouldpass.withwarning.online.14.srt 

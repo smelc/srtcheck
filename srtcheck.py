@@ -2,7 +2,8 @@
 
 # Licence: Do whatever you want with that.
 
-# TODO : check that times are increasing ?
+# TODO : check that times are increasing ? -> should be a warning, not an error
+# since it looks like it occurs to have overlapping subtitles
 
 import sys
 import re
@@ -21,10 +22,12 @@ def print_error(msg,lineno) :
 
 """ Check if str(str_input) is equal to expected_integer """
 """ Print a warning if this not the case. Pure method otherwise. """
+""" Return int(str_input)-expected_integer """
+""" Exit the program if an error is discovered. """
 def checkcounter(str_input,expected_integer,lineno) :
 	try:
 		if(int(str_input) != expected_integer) :
-			print_warning("I've found subtitle number "+str(str_input)+" while I was exepecting subtitle number "+str(expected_integer)+".",lineno)
+			print_warning("I've found subtitle number "+str(str_input)+" while I was expecting subtitle number "+str(expected_integer)+".",lineno)
 	except ValueError:
 		print_error("unexpected input : is a subtitle number missing (I was expecting #"+str(expected_integer)+") ?",lineno)
 		sys.exit(3)
@@ -47,6 +50,7 @@ def checkduration(str_input,lineno) :
 		# TODO check that left < right
 	else:
 		print_error("invalid syntax: regular expression (.*) --> (.*) did not match.",lineno)
+		print(str_input)
 		sys.exit(3)
 
 deuxpointspattern = re.compile('^(\d{2}):(\d{2}):(\d{2}),(\d{3})$')
@@ -77,7 +81,7 @@ def check_time(str_input,side,lineno) :
 def eat_non_blanklines_followed_by_one_blank_line(filehandler,lineno) :
 	string = filehandler.readline()
 	lineno+=1
-	while(string!="\n") : # if line is not empty or
+	while(string!="\n" and not string=="") : # while line is not blank (i.e. it is a newline or an empty line (the last one without \n)) 
 		# Debugging purposes
 		if verbose :
 			print("Checking line "+str(lineno)+".")
@@ -89,14 +93,14 @@ def eat_non_blanklines_followed_by_one_blank_line(filehandler,lineno) :
 	else:
 		return lineno
 
-""" Check syntax of subtitle file 'filename' """
-def checkfile(filename) :
-	filehandler = open(filename, 'r') # default encoding used here *** take care... *** This works for file encoded 
-					  # in iso-8859-15 even if the local encoding is utf-8.
+""" Check syntax of subtitle file 'filename'. The file is decoded according to encoding 'desired_encoding'. """
+def checkfile(filename,desired_encoding) :
+	filehandler = open(filename, 'r',encoding=desired_encoding)
 	# see http://diveintopython3.org/files.html for more about the encoding
 	result = True
 	number_of_sub_so_far = 0
 	lineno = 0 # number of lines read so far
+	global retry
 	while(result) :
 		# main loop
 		str_input = filehandler.readline()
@@ -104,9 +108,20 @@ def checkfile(filename) :
 			result = False
 		else:
 			lineno+=1
-			checkcounter(str_input,number_of_sub_so_far+1,lineno) # verify subtitle number
+			res=checkcounter(str_input,number_of_sub_so_far+1,lineno) # verify subtitle number
 			number_of_sub_so_far+=1
-			str_input = filehandler.readline()
+			try:
+				str_input = filehandler.readline()
+			except UnicodeDecodeError:
+				print("Catched decoding error when reading "+filename+" supposing it was encoded in "+desired_encoding+".")
+				if not retry :
+					print("Retrying with encoding iso-8859-1.")
+					retry = True
+					filehandler.close()
+					checkfile(filename,"iso-8859-1")
+				else :
+					print("Exiting.")
+					sys.exit(4)
 			if(str_input == "") : # eof was reached
 				result = False
 			else:
@@ -126,7 +141,8 @@ l = list(filter(lambda x : x == "-v" or x == "--verbose",sys.argv[1:]))
 verbose = len(l) >= 1
 
 for filename in filter(lambda x : x!="--help" and x != "-h" and x != "-v" and x != "--verbose",sys.argv[1:]) :
-	checkfile(filename)	
+	retry = False
+	checkfile(filename,"latin1")	
 
 if warnings_encountered:
 	sys.exit(2)
