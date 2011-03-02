@@ -5,6 +5,23 @@
 # TODO : check that times are increasing ? -> should be a warning, not an error
 # since it looks like it occurs to have overlapping subtitles
 
+from optparse import OptionParser
+
+parser = OptionParser()
+
+parser.add_option("-v", "--verbose", help="print the lines being checked", action="store_true", dest="verbose")
+parser.add_option("-t", "--try-encoding", help="try this encoding if default (utf-8) fails", type="string", dest="filtre_categorie")
+parser.add_option("-o", "--only-encoding", help="only use this encoding to read files", type="string", dest="filtre_entree")
+
+(options, args) = parser.parse_args()
+
+# TODO sn non spécifié date_debut = mois courant
+if options.date_debut == None:
+    print "Erreur: L'option -d ou --debut option est obligatoire (ex: -d fevrier 2008)."
+
+if options.date_fin == None:
+    print "Erreur: L'option -f ou --fin option est obligatoire (ex -f juin 2048)."
+
 import sys
 import re
 
