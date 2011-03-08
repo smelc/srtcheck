@@ -9,18 +9,11 @@ from optparse import OptionParser
 
 parser = OptionParser()
 
-parser.add_option("-v", "--verbose", help="print the lines being checked", action="store_true", dest="verbose")
-parser.add_option("-t", "--try-encoding", help="try this encoding if default (utf-8) fails", type="string", dest="filtre_categorie")
-parser.add_option("-o", "--only-encoding", help="only use this encoding to read files", type="string", dest="filtre_entree")
+parser.add_option("-v", "--verbose", help="print the lines being checked", default=False, dest="verbose",action="store_true")
+parser.add_option("-t", "--try-encoding", help="try the given encoding to read files if default fails. --try-encoding can be given multiple times", type="string", dest="encoding_to_try", action="append",default=[])
+parser.add_option("-o", "--only-encoding", help="only use the given encoding to read files", type="string", dest="only_encoding", action="store",default=None)
 
 (options, args) = parser.parse_args()
-
-# TODO sn non spécifié date_debut = mois courant
-if options.date_debut == None:
-    print "Erreur: L'option -d ou --debut option est obligatoire (ex: -d fevrier 2008)."
-
-if options.date_fin == None:
-    print "Erreur: L'option -f ou --fin option est obligatoire (ex -f juin 2048)."
 
 import sys
 import re
@@ -55,7 +48,7 @@ arrowpattern = re.compile('^\s*(\S*)\s*-->\s*(\S*)\s*$') # \s is space, \S is no
 """ return if str_input is correct. Exit the program otherwise. """
 def checkduration(str_input,lineno) :
 	# Debugging purposes
-	if verbose :
+	if options.verbose :
 		print("Checking line "+str(lineno)+".")
 		print(str_input)
 	# /Debug
@@ -100,7 +93,7 @@ def eat_non_blanklines_followed_by_one_blank_line(filehandler,lineno) :
 	lineno+=1
 	while(string!="\n" and not string=="") : # while line is not blank (i.e. it is a newline or an empty line (the last one without \n)) 
 		# Debugging purposes
-		if verbose :
+		if options.verbose :
 			print("Checking line "+str(lineno)+".")
 			print(string)
 		string = filehandler.readline()
@@ -117,7 +110,7 @@ def checkfile(filename,desired_encoding) :
 	result = True
 	number_of_sub_so_far = 0
 	lineno = 0 # number of lines read so far
-	global retry
+	global encodings_left_to_try
 	while(result) :
 		# main loop
 		str_input = filehandler.readline()
@@ -131,12 +124,18 @@ def checkfile(filename,desired_encoding) :
 				str_input = filehandler.readline()
 			except UnicodeDecodeError:
 				print("Catched decoding error when reading "+filename+" supposing it was encoded in "+desired_encoding+".")
-				if not retry :
-					print("Retrying with encoding iso-8859-1.")
-					retry = True
+				if len(encodings_left_to_try) > 0:
+					ec_to_try = encodings_left_to_try[0]
+					encodings_left_to_try = encodings_left_to_try[1:]
+					print("Retrying with encoding "+ec_to_try+".")
 					filehandler.close()
-					checkfile(filename,"iso-8859-1")
+					checkfile(filename,ec_to_try)
 				else :
+					if(options.only_encoding!=None):
+						print("Because you used --only-encoding, I have no more encoding to try.")
+					else:
+						print("I have no more encoding to try.")
+						print("Did you specify one with --try-encoding ?")
 					print("Exiting.")
 					sys.exit(4)
 			if(str_input == "") : # eof was reached
@@ -150,16 +149,25 @@ def checkfile(filename,desired_encoding) :
 				lineno = result
 
 # entry point of main
+
+# sanity checks
 if len(sys.argv) <= 1 :
 	print("I need at least one argument. Exiting.")
 	sys.exit(1)
 
-l = list(filter(lambda x : x == "-v" or x == "--verbose",sys.argv[1:]))
-verbose = len(l) >= 1
+if options.only_encoding != None and options.encoding_to_try != []:
+	print("Error: options --try-encoding and --only-encoding are incompatible!")
+	print("Exiting.")
+	sys.exit(5)
+# /sanity checks
 
-for filename in filter(lambda x : x!="--help" and x != "-h" and x != "-v" and x != "--verbose",sys.argv[1:]) :
-	retry = False
-	checkfile(filename,"latin1")	
+for filename in args:
+	encodings_left_to_try = options.encoding_to_try
+	if options.only_encoding != None:
+		checkfile(filename,options.only_encoding)
+	else:
+		checkfile(filename,sys.getdefaultencoding())	
+	encodings_left_to_try = options.encoding_to_try # resetting encodings to try for next file
 
 if warnings_encountered:
 	sys.exit(2)

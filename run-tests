@@ -14,10 +14,10 @@ faulty_files=""
 for f in $utf8filesshouldpass
 do
 	# echo "Testing tests/"$f":"
-	./srtcheck.py tests/$f > /dev/null
+	./srtcheck.py --only-encoding utf-8 tests/$f > /dev/null
 	if [ $? != "0" ]
 	then # test failed
-      		faulty_files=$faulty_files" "$f
+		faulty_files=$faulty_files" "$f
 		echo -n "!"
 	else # test passed
 		echo -n "."
@@ -27,10 +27,10 @@ done
 for f in $utf8filesshouldfail
 do
 	# echo "Testing tests/"$f":"
-	./srtcheck.py tests/$f > /dev/null
+	./srtcheck.py --only-encoding utf-8 tests/$f > /dev/null
 	if [ $? == "0" ]
 	then # test failed
-      		faulty_files=$faulty_files" "$f
+		faulty_files=$faulty_files" "$f
 		echo -n "!"
 	else # test passed
 		echo -n "."
@@ -42,7 +42,7 @@ then
 	for f in $otherfilesshouldpass
 	do
 		# echo "Testing tests/"$f":"
-		./srtcheck.py tests/$f > /dev/null
+		./srtcheck.py --try-encoding latin1 --try-encoding iso8859-1 tests/$f > /dev/null # You should add more encodings here if needed
 		if [ $? != "0" ]
 		then # test failed
 			faulty_files=$faulty_files" "$f
@@ -55,7 +55,7 @@ then
 	for f in $otherfilesshouldfail
 	do
 		# echo "Testing tests/"$f":"
-		./srtcheck.py tests/$f > /dev/null
+		./srtcheck.py --try-encoding latin1 --try-encoding iso8859-1 tests/$f > /dev/null
 		if [ $? == "0" ]
 		then # test failed
 			faulty_files=$faulty_files" "$f
