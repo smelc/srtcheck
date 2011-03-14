@@ -5,8 +5,8 @@ Check the syntax of .srt files (subtitles).
 ## Remarks ##
 
 - Tested only on a system with utf-8 as the default encoding.
-- script ./run-tests if for development purposes. Yet, you can try it
-  to verify that srtcheck behaves as planned on your machine.
+- script ./run-tests is for development purposes. Yet, you can try it
+  to verify that srtcheck behaves as planned on your setup.
 
 ## Options ##
 

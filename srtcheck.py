@@ -81,30 +81,47 @@ def check_time(str_input,side,lineno) :
 	else:
 		print_error("invalid syntax: regular expression nn:nn:nn,nnn did not match.",lineno)
 		sys.exit(3)
-#	result = deuxpointspattern.groups() # there are 4 groups afterwards if if matched
-#	if(len(result)!=4):
-#		sys.exit(-1)
 
 """ input: lineno is the number of lines read so far """
 """ output: return False if eof is reached """
 """ output: return the line number of the first blank line otherwise """
-def eat_non_blanklines_followed_by_one_blank_line(filehandler,lineno) :
-	string = filehandler.readline()
+def eat_non_blanklines_followed_by_one_blank_line(lineno,desired_encoding) :
+	global filehandler
+	str_input = filehandler.readline()
 	lineno+=1
-	while(string!="\n" and not string=="") : # while line is not blank (i.e. it is a newline or an empty line (the last one without \n)) 
+	while(str_input!="\n" and not str_input=="") : # while line is not blank (i.e. it is a newline or an empty line (the last one without \n)) 
 		# Debugging purposes
 		if options.verbose :
 			print("Checking line "+str(lineno)+".")
-			print(string)
-		string = filehandler.readline()
+			print(str_input)
+		str_input = filehandler.readline()
 		lineno+=1
-	if string == "":
+	if str_input == "":
 		return False
 	else:
 		return lineno
 
+def treat_decoding_error(desired_encoding) :
+	global encodings_left_to_try,filename,filehandler
+	print("Catched decoding error when reading "+filename+" supposing it was encoded in "+desired_encoding+".")
+	if len(encodings_left_to_try) > 0:
+		ec_to_try = encodings_left_to_try[0]
+		encodings_left_to_try = encodings_left_to_try[1:]
+		print("Retrying with encoding "+ec_to_try+".")
+		filehandler.close()
+		checkfile(ec_to_try)
+	else :
+		if(options.only_encoding!=None):
+			print("Because you used --only-encoding, I have no more encoding to try.")
+		else:
+			print("I have no more encoding to try.")
+			print("Did you specify one with --try-encoding ?")
+		print("Exiting.")
+		sys.exit(4)
+
 """ Check syntax of subtitle file 'filename'. The file is decoded according to encoding 'desired_encoding'. """
-def checkfile(filename,desired_encoding) :
+def checkfile(desired_encoding) :
+	global filename,filehandler
 	filehandler = open(filename, 'r',encoding=desired_encoding)
 	# see http://diveintopython3.org/files.html for more about the encoding
 	result = True
@@ -113,37 +130,20 @@ def checkfile(filename,desired_encoding) :
 	global encodings_left_to_try
 	while(result) :
 		# main loop
-		str_input = filehandler.readline()
+		str_input = filehandler.readline() 
 		if(str_input == "") : # eof was reached
 			result = False
 		else:
 			lineno+=1
 			res=checkcounter(str_input,number_of_sub_so_far+1,lineno) # verify subtitle number
 			number_of_sub_so_far+=1
-			try:
-				str_input = filehandler.readline()
-			except UnicodeDecodeError:
-				print("Catched decoding error when reading "+filename+" supposing it was encoded in "+desired_encoding+".")
-				if len(encodings_left_to_try) > 0:
-					ec_to_try = encodings_left_to_try[0]
-					encodings_left_to_try = encodings_left_to_try[1:]
-					print("Retrying with encoding "+ec_to_try+".")
-					filehandler.close()
-					checkfile(filename,ec_to_try)
-				else :
-					if(options.only_encoding!=None):
-						print("Because you used --only-encoding, I have no more encoding to try.")
-					else:
-						print("I have no more encoding to try.")
-						print("Did you specify one with --try-encoding ?")
-					print("Exiting.")
-					sys.exit(4)
+			str_input = filehandler.readline()
 			if(str_input == "") : # eof was reached
 				result = False
 			else:
 				lineno+=1
 				checkduration(str_input,lineno) # verify nn:nn:nn,nnn --> nn:nn:nn,nnn line
-				result=eat_non_blanklines_followed_by_one_blank_line(filehandler,lineno) # skip subtitle text
+				result=eat_non_blanklines_followed_by_one_blank_line(lineno,desired_encoding) # skip subtitle text
 				# Remark: the blank line in-between subtitle n-1 and subtitle n is eaten by the previous method call
 				# at this point, result is either False (eof was reached) or it is an integer (the number of lines checked so far)
 				lineno = result
@@ -161,12 +161,19 @@ if options.only_encoding != None and options.encoding_to_try != []:
 	sys.exit(5)
 # /sanity checks
 
+# global variable
+filehandler=None
+
 for filename in args:
 	encodings_left_to_try = options.encoding_to_try
 	if options.only_encoding != None:
-		checkfile(filename,options.only_encoding)
+		desired_encoding = options.only_encoding
 	else:
-		checkfile(filename,sys.getdefaultencoding())	
+		desired_encoding = sys.getdefaultencoding()
+	try:
+		checkfile(desired_encoding)
+	except UnicodeDecodeError:
+		treat_decoding_error(desired_encoding)
 	encodings_left_to_try = options.encoding_to_try # resetting encodings to try for next file
 
 if warnings_encountered:
