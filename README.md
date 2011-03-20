@@ -2,6 +2,10 @@
 
 Check the syntax of .srt files (subtitles).
 
+Useful, for example, to catch decoding errors when
+transforming a utf-8 file to iso-8859-15 with
+gnome-subtitles (to put subtitles on the freebox HD).
+
 ## Remarks ##
 
 - Tested only on a system with utf-8 as the default encoding.
