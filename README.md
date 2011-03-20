@@ -25,7 +25,7 @@ gnome-subtitles (to put subtitles on the freebox HD).
 
 ## Usage ##
 
-    $ ./srtcheck.py tests/test1.shouldpass.withwarning.online.14.srt 
+    $ ./srtcheck.py tests/test1.shouldpass.withwarning.online.734.srt 
     Warning, on line 734,
     I've found subtitle number 14 while I was exepecting subtitle number 164.
 
