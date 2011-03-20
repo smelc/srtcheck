@@ -22,14 +22,14 @@ Check the syntax of .srt files (subtitles).
 ## Usage ##
 
     $ ./srtcheck.py tests/test1.shouldpass.withwarning.online.14.srt 
-    File tests/test1.shouldpass.withwarning.online.14.srt: Warning, on line 734,
+    Warning, on line 734,
     I've found subtitle number 14 while I was exepecting subtitle number 164.
 
     $ ./srtcheck.py tests/test2.shouldfail.online.406.srt 
-    File tests/test2.shouldfail.online.406.srt: Error, on line 406, invalid syntax:
+    Error, on line 406, invalid syntax:
     regular expression (.*) --> (.*) did not match.
 
     $ ./srtcheck.py --try-encoding latin1 tests/test7.shouldpass.srt 
-    Catched decoding error when reading tests/test7.shouldpass.srt supposing it was
+    Catched decoding error when reading the file supposing it was
     encoded in utf-8.
     Retrying with encoding latin1.

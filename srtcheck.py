@@ -21,7 +21,10 @@ import re
 warnings_encountered = False
 
 def print_warning_or_error(msg,typemsg,lineno) :
-	print("File "+filename+": "+typemsg+", on line "+str(lineno)+", "+msg)
+	if numberoffiles == 1 :
+		print(typemsg+", on line "+str(lineno)+", "+msg)
+	else :
+		print("File "+filename+": "+typemsg+", on line "+str(lineno)+", "+msg)
 
 def print_warning(msg,lineno) :
 	print_warning_or_error(msg,"Warning",lineno)
@@ -103,7 +106,11 @@ def eat_non_blanklines_followed_by_one_blank_line(lineno,desired_encoding) :
 
 def treat_decoding_error(desired_encoding) :
 	global encodings_left_to_try,filename,filehandler
-	print("Catched decoding error when reading "+filename+" supposing it was encoded in "+desired_encoding+".")
+	if numberoffiles > 1 :
+		print("Catched decoding error when reading "+filename+" supposing it was encoded in "+desired_encoding+".")
+	else:
+		print("Catched decoding error when reading the file supposing it was encoded in "+desired_encoding+".")
+
 	if len(encodings_left_to_try) > 0:
 		ec_to_try = encodings_left_to_try[0]
 		encodings_left_to_try = encodings_left_to_try[1:]
@@ -163,6 +170,7 @@ if options.only_encoding != None and options.encoding_to_try != []:
 
 # global variable
 filehandler=None
+numberoffiles=len(args)
 
 for filename in args:
 	encodings_left_to_try = options.encoding_to_try
